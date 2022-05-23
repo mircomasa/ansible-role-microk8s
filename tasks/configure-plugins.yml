@@ -1,4 +1,5 @@
 ---
+
 - name: Enable plugins
   ansible.builtin.command:
     cmd: "microk8s.enable {{ microk8s_plugin.key }}"
@@ -7,11 +8,10 @@
     loop_var: microk8s_plugin
     label: "{{ microk8s_plugin.key }}"
   when:
-    - is_master is defined and ( is_master | bool)
+    - microk8s_is_master | default(false) | bool
     - microk8s_plugins is defined
     - microk8s_plugin.value
     - microk8s_plugin.key != "registry"
-    - microk8s_plugin.key != "dns"
   register: microk8s_cmd_result
   changed_when:
     - "'Addon {{ microk8s_plugin.key }} is already enabled'
@@ -34,7 +34,7 @@
     - "'Addon {{ microk8s_plugin.key }} is already disabled'
       not in microk8s_cmd_result.stdout"
   when:
-    - is_master is defined and ( is_master | bool)
+    - microk8s_is_master | default(false) | bool
     - microk8s_plugins is defined
     - not (microk8s_plugin.value | bool)
     - microk8s_plugin.key != "registry"
@@ -51,7 +51,7 @@
   changed_when:
     - "'Addon registry is already enabled' not in microk8s_cmd_result.stdout"
   when:
-    - is_master is defined and ( is_master | bool)
+    - microk8s_is_master | default(false) | bool
     - microk8s_plugins is defined
     - microk8s_plugins.registry is defined
     - (microk8s_plugins.registry | bool)
@@ -68,7 +68,7 @@
   changed_when:
     - "'Addon registry is already disabled' not in microk8s_cmd_result.stdout"
   when:
-    - is_master is defined and ( is_master | bool)
+    - microk8s_is_master | default(false) | bool
     - microk8s_plugins is defined
     - microk8s_plugins.registry is defined
     - not (microk8s_plugins.registry | bool)
@@ -78,20 +78,4 @@
     - microk8s.plugins.disable
     - microk8s.plugins.disable.registry
 
-- name: Enable DNS
-  ansible.builtin.command:
-    cmd: 'microk8s.enable dns:{{ microk8s_dns_servers | join(",") }}'
-  register: microk8s_cmd_result
-  changed_when:
-    - "'Addon dns is already enabled' not in microk8s_cmd_result.stdout"
-  when:
-    - is_master is defined and ( is_master | bool)
-    - microk8s_plugins is defined
-    - microk8s_plugins.dns is defined
-    - (microk8s_plugins.dns | bool)
-  tags:
-    - microk8s
-    - microk8s.plugins
-    - microk8s.plugins.enable
-    - microk8s.plugins.enable.dns
-...
+

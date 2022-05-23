@@ -6,7 +6,7 @@
     # yamllint disable rule:line-length
     content: |
       {% for host in groups[microk8s_group_ha] %}
-      {{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_hostname }}
+      {{ hostvars[host].ansible_host }} {{ hostvars[host].ansible_hostname }}
       {% endfor %}
     # yamllint enable rule:line-length
   tags:
@@ -14,15 +14,29 @@
     - microk8s.ha
     - microk8s.ha.hosts
 
-- name: Set master var on all hosts
+- name: Set microk8s_master var on all hosts
   set_fact:
-    microk8s_master: "{{ inventory_hostname }}"
-  delegate_to: "{{ microk8s_hosts }}"
-  delegate_facts: true
-  with_items: "{{ ansible_play_hosts }}"
-  loop_control:
-    loop_var: microk8s_hosts
-  when: is_master is defined and (is_master | bool)
+    microk8s_master: "{{ groups[microk8s_group_ha][0] }}"
+  tags:
+    - microk8s
+    - microk8s.ha
+    - microk8s.ha.master
+  
+- name: Set microk8s_is_master var on all hosts
+  set_fact:
+    microk8s_is_master: "{{ inventory_hostname ==  microk8s_master }}"
+  tags:
+    - microk8s
+    - microk8s.ha
+    - microk8s.ha.master
+    
+- name: Set microk8s_is_master var on all hosts
+  debug:
+    msg: "microk8s_master={{ microk8s_master }} microk8s_is_master={{ microk8s_is_master }}"
+  tags:
+    - microk8s
+    - microk8s.ha
+    - microk8s.ha.master
 
 - name: Waiting for microk8s to be ready on microk8s host master
   ansible.builtin.command:
