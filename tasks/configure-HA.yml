@@ -13,6 +13,7 @@
     - microk8s
     - microk8s.ha
     - microk8s.ha.hosts
+  become: yes
 
 - name: Set microk8s_master var on all hosts
   set_fact:
@@ -30,9 +31,9 @@
     - microk8s.ha
     - microk8s.ha.master
     
-- name: Set microk8s_is_master var on all hosts
+- name: Display Microk8s cluster information
   debug:
-    msg: "microk8s_master={{ microk8s_master }} microk8s_is_master={{ microk8s_is_master }}"
+    msg: "microk8s_is_master={{ microk8s_is_master }} microk8s_master={{ microk8s_master }}"
   tags:
     - microk8s
     - microk8s.ha
@@ -82,4 +83,4 @@
     - microk8s
     - microk8s.ha
     - microk8s.ha.join
-...
+

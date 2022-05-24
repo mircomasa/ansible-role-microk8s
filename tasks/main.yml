@@ -21,6 +21,9 @@
     - microk8s
     - microk8s.users
     - notest
+    
+- name: reset ssh connection
+  meta: reset_connection
 
 - name: configure High Availability
   ansible.builtin.import_tasks:

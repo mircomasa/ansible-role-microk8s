@@ -13,6 +13,7 @@
     - microk8s
     - microk8s.user
     - microk8s.user.group
+  become: yes
 
 - name: Create .kube folder for the user
   ansible.builtin.file:
@@ -29,6 +30,7 @@
     - microk8s
     - microk8s.kube
     - microk8s.kube.dir
+  become: yes
 
 - name: create kubectl config
   ansible.builtin.shell:
@@ -47,6 +49,7 @@
     - microk8s
     - microk8s.kube
     - microk8s.kube.config
+  become: yes
 
 - name: reaffirm permission on config directory
   ansible.builtin.file:
@@ -63,6 +66,7 @@
     - microk8s
     - microk8s.kube
     - microk8s.kube.permission
+  become: yes
 
 - name: reaffirm permission on config file
   ansible.builtin.file:
@@ -79,4 +83,5 @@
     - microk8s
     - microk8s.kube
     - microk8s.kube.permission
+  become: yes
 ...

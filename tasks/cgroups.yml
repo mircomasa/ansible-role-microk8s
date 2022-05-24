@@ -12,6 +12,7 @@
     - microk8s
     - microk8s.dependencies
     - microk8s.dependencies.cgroups
+  become: yes
 
 - name: Slurp /boot/firmware/cmdline.txt
   ansible.builtin.slurp:
@@ -23,6 +24,7 @@
     - microk8s
     - microk8s.dependencies
     - microk8s.dependencies.cgroups
+  become: yes
 
 - name: Enable cgroups in /boot/firmware/cmdline.txt
   ansible.builtin.lineinfile:
@@ -45,6 +47,7 @@
     - microk8s
     - microk8s.dependencies
     - microk8s.dependencies.cgroups
+  become: yes
 
 - name: notify handler
   ansible.builtin.debug:
@@ -57,9 +60,11 @@
     - notest
     - microk8s.dependencies
     - microk8s.dependencies.cgroups
+  become: yes
 
 - name: Flush Handlers
   ansible.builtin.meta: flush_handlers
   tags:
     - notest
-...
+  become: yes
+
