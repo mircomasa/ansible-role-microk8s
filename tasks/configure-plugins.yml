@@ -21,6 +21,7 @@
     - microk8s
     - microk8s.plugins
     - microk8s.plugins.enable
+  become: yes
 
 - name: Disable plugins
   ansible.builtin.command:
@@ -43,6 +44,7 @@
     - microk8s
     - microk8s.plugins
     - microk8s.plugins.disable
+  become: yes
 
 - name: Enable registry
   ansible.builtin.command:
@@ -60,6 +62,7 @@
     - microk8s.plugins
     - microk8s.plugins.enable
     - microk8s.plugins.enable.registry
+  become: yes
 
 - name: Disable registry
   ansible.builtin.command:
@@ -77,5 +80,6 @@
     - microk8s.plugins
     - microk8s.plugins.disable
     - microk8s.plugins.disable.registry
+  become: yes
 
 
