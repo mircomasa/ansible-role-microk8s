@@ -24,6 +24,9 @@
     
 - name: reset ssh connection
   meta: reset_connection
+  
+- name: gather facts aftter ssh connection reset
+  setup:
 
 - name: configure High Availability
   ansible.builtin.import_tasks:
