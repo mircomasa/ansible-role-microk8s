@@ -71,6 +71,8 @@
     - name: Set the microk8s join command on the microk8s node
       ansible.builtin.command:
         cmd: "{{ microk8s_join_command.stdout }} --skip-verify"
+      register: join_command_ret
+      failed_when: join_command_ret.rc > 0 and join_command_ret.stdout is not search("is already known to dqlite")
       
   when: inventory_hostname not in microk8s_master
   tags:
