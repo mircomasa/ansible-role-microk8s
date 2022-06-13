@@ -1,4 +1,5 @@
 ---
+  
 - name: Reboot System
   ansible.builtin.reboot:
   when:
@@ -10,4 +11,14 @@
   changed_when: false
   when:
     - skip_handlers | default("false") == "false"
-...
+
+
+- name: stop microk8s
+  ansible.builtin.command:
+    cmd: microk8s.stop
+  listen: "restart microk8s"
+    
+- name: start microk8s
+  ansible.builtin.command:
+    cmd: microk8s.start
+  listen: "restart microk8s"
