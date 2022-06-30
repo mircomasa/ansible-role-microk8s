@@ -6,7 +6,7 @@
     # yamllint disable rule:line-length
     content: |
       {% for host in groups[microk8s_group_ha] %}
-      {{ hostvars[host].default_ipv4.address | default(hostvars[host].ansible_host) }} {{ hostvars[host].hostname | default(hostvars[host].host_name) }}
+      {{ hostvars[host].default_ipv4.address | default(hostvars[host].ansible_host) }}  {{ hostvars[host].hostname | default(hostvars[host].host_name) }} {{ hostvars[host].hostname.split('.')[0] | default(hostvars[host].host_name.split('.')[0]) }}
       {% endfor %}
     # yamllint enable rule:line-length
   tags:
