@@ -6,7 +6,11 @@
     # yamllint disable rule:line-length
     content: |
       {% for host in groups[microk8s_group_ha] %}
-      {{ hostvars[host].default_ipv4.address | default(hostvars[host].ansible_host) }}  {{ hostvars[host].hostname | default(hostvars[host].host_name) }} {{ hostvars[host].hostname.split('.')[0] | default(hostvars[host].host_name.split('.')[0]) }}
+      {% if hostvars[host].ansible_host and hostvars[host].host_name is defined %}
+      {{ hostvars[host].ansible_host }}  {{ hostvars[host].host_name }} {{ hostvars[host].host_name.split('.')[0] }}
+      {% else %}
+      {{ hostvars[host].default_ipv4.address }}  {{ hostvars[host].hostname }} {{ hostvars[host].hostname.split('.')[0] }}
+      {% endif %}
       {% endfor %}
     # yamllint enable rule:line-length
   tags:
