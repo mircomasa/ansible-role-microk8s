@@ -1,4 +1,5 @@
 ---
+
 - name: Enumerate all cluster hosts within the hosts file
   ansible.builtin.blockinfile:
     dest: /etc/hosts
