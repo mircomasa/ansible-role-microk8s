@@ -21,7 +21,11 @@ ExecStartPre=/bin/sleep 15
 # Step 3: Verify pods relocated (except DaemonSets)
 ExecStartPre=/bin/bash -c 'count=$(/snap/bin/microk8s kubectl get pods --all-namespaces -o wide --field-selector spec.nodeName={{ inventory_hostname }} --no-headers | grep -v DaemonSet | wc -l); echo "Remaining pods: $count"; exit 0'
 
-# Step 4: Refresh certificates
+# Step 4.1: Delete old kubelet certificates (will regenerate on start)
+ExecStartPre=/bin/rm -f /var/snap/microk8s/current/certs/kubelet.crt
+ExecStartPre=/bin/rm -f /var/snap/microk8s/current/certs/kubelet.key
+
+# Step 4.2: Refresh certificates
 {% for cert in microk8s_certs_to_renew %}
 ExecStart=/snap/bin/microk8s refresh-certs --cert {{ cert }}
 {% endfor %}
