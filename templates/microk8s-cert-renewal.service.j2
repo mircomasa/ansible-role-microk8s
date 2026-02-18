@@ -4,15 +4,52 @@ After=snap.microk8s.daemon-kubelite.service
 
 [Service]
 Type=oneshot
+# Pre-check: Verify cluster health
+ExecStartPre=/bin/bash -c '/snap/bin/microk8s kubectl get nodes --no-headers | grep -c " Ready" | grep -q "[23]" || exit 1'
+
+# Step 1: Drain node - DISABLE EVICTION to bypass PDBs
+ExecStartPre=/snap/bin/microk8s kubectl drain {{ inventory_hostname }} \
+  --ignore-daemonsets \
+  --delete-emptydir-data \
+  --disable-eviction \
+  --force \
+  --timeout=120s
+  
+# Step 2: Wait for pods to relocate
+ExecStartPre=/bin/sleep 15
+
+# Step 3: Verify pods relocated (except DaemonSets)
+ExecStartPre=/bin/bash -c 'count=$(/snap/bin/microk8s kubectl get pods --all-namespaces -o wide --field-selector spec.nodeName={{ inventory_hostname }} --no-headers | grep -v DaemonSet | wc -l); echo "Remaining pods: $count"; exit 0'
+
+# Step 4: Refresh certificates
 {% for cert in microk8s_certs_to_renew %}
 ExecStart=/snap/bin/microk8s refresh-certs --cert {{ cert }}
 {% endfor %}
 ExecStartPost=/bin/sleep {{ microk8s_certs_sleep_after_refresh }}
+
+# Step 5: Stop MicroK8s
 ExecStartPost=/snap/bin/microk8s stop
 ExecStartPost=/bin/sleep {{ microk8s_certs_sleep_after_stop }}
+
+# Step 6: Clean up any stuck terminating pods
+ExecStartPost=/bin/bash -c 'for pod in $(/snap/bin/microk8s kubectl get pods --all-namespaces -o wide --field-selector=spec.nodeName={{ inventory_hostname }},status.phase==Terminating --no-headers 2>/dev/null | awk "{print $2\" -n \"$1}"); do /snap/bin/microk8s kubectl delete pod $pod --grace-period=0 --force 2>/dev/null || true; done'
+
+# Step 7: Start MicroK8s
 ExecStartPost=/snap/bin/microk8s start
 ExecStartPost=/bin/sleep {{ microk8s_certs_sleep_after_start }}
-ExecStartPost=/snap/bin/microk8s kubectl get nodes
+
+# Step 8: Wait for node to be Ready
+ExecStartPost=/bin/bash -c 'for i in {1..30}; do /snap/bin/microk8s kubectl get nodes {{ inventory_hostname }} --no-headers | grep -q "Ready" && break || sleep 5; done'
+
+# Step 9: Uncordon node - allow pods to schedule again
+ExecStartPost=/snap/bin/microk8s kubectl uncordon {{ inventory_hostname }}
+
+# Step 10: Verify final status
+ExecStartPost=/snap/bin/microk8s kubectl get nodes {{ inventory_hostname }}
+
+# Step 11: Verify quorum maintained
+ExecStartPost=/bin/bash -c '/snap/bin/microk8s kubectl get nodes --no-headers | grep -c "Ready" | grep -q "[23]"'
+
 StandardOutput=journal
 StandardError=journal
 

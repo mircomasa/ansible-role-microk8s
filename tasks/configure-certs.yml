@@ -19,7 +19,7 @@
 
 - name: Deploy certificate renewal service
   template:
-    src: templates/microk8s-cert-renewal.service.j2
+    src: templates/{{ microk8s_certs_renewal.service_name }}.service.j2
     dest: /etc/systemd/system/{{ microk8s_certs_renewal.service_name }}.service
     mode: '0644'
   register: service_deployed
@@ -28,7 +28,7 @@
 
 - name: Deploy certificate renewal timer
   template:
-    src: templates/microk8s-cert-renewal.timer.j2
+    src: templates/{{ microk8s_certs_renewal.service_name }}.timer.j2
     dest: /etc/systemd/system/{{ microk8s_certs_renewal.service_name }}.timer
     mode: '0644'
   register: timer_deployed
