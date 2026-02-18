@@ -1,0 +1,56 @@
+---
+
+- name: Ensure systemd directory exists
+  file:
+    path: /etc/systemd/system
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Calculate renewal day
+  set_fact:
+    renewal_day: "{{ '%02d' | format(microk8s_certs_renewal.renewal_base_day + groups[microk8s_group_ha].index(inventory_hostname) | int) }}"
+
+- name: Display deployment information
+  debug:
+    msg: |
+      Deploying to {{ inventory_hostname }}
+      Renewal schedule: On day {{ renewal_day }} of months {{ microk8s_certs_renewal.renewal_months }} at {{ microk8s_certs_renewal.renewal_hour }}:{{ microk8s_certs_renewal.renewal_minute }}
+
+- name: Deploy certificate renewal service
+  template:
+    src: templates/microk8s-cert-renewal.service.j2
+    dest: /etc/systemd/system/{{ microk8s_certs_renewal.service_name }}.service
+    mode: '0644'
+  register: service_deployed
+  notify: reload systemd
+  become: true
+
+- name: Deploy certificate renewal timer
+  template:
+    src: templates/microk8s-cert-renewal.timer.j2
+    dest: /etc/systemd/system/{{ microk8s_certs_renewal.service_name }}.timer
+    mode: '0644'
+  register: timer_deployed
+  notify: reload systemd
+  become: true
+
+- name: Force systemd reload if files changed
+  meta: flush_handlers
+
+- name: Enable certificate renewal timer
+  systemd:
+    name: "{{ microk8s_certs_renewal.service_name }}.timer"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
+
+- name: Get timer status
+  command: systemctl list-timers {{ microk8s_certs_renewal.service_name }}.timer --no-pager
+  register: timer_status
+  changed_when: false
+
+- name: Display timer status
+  debug:
+    var: timer_status.stdout_lines

@@ -36,6 +36,7 @@ microk8s_disable_snap_autoupdate: false
 #   prometheus: false       # Prometheus operator for monitoring and logging
 #   traefik: false
 
+microk8s_registry: false
 microk8s_registry_size: 20Gi
 
 microk8s_dns_servers:
@@ -53,4 +54,21 @@ microk8s_group_ha: "microk8s_HA"
 
 # regex to select IP address for joining nodes in HA setup
 microk8s_ip_regex_ha: "([0-9]{1,3}[\\.]){3}[0-9]{1,3}"
-...
+
+# Certificate renewal configuration
+microk8s_certs_renewal:
+  service_name: microk8s-cert-renewal
+  renewal_months: [1, 7]  # January and July
+  renewal_base_day: 1
+  renewal_hour: "02"
+  renewal_minute: "30"
+  
+# Certificates to renew (HA-safe - excludes ca.crt)
+microk8s_certs_to_renew:
+  - server.crt
+  - front-proxy-client.crt
+
+# Sleep timings
+microk8s_certs_sleep_after_refresh: 5
+microk8s_certs_sleep_after_stop: 10
+microk8s_certs_sleep_after_start: 30

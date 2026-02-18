@@ -7,10 +7,10 @@
     # yamllint disable rule:line-length
     content: |
       {% for host in groups[microk8s_group_ha] %}
-      {% if hostvars[host].ansible_host and hostvars[host].host_name is defined %}
-      {{ hostvars[host].ansible_host }}  {{ hostvars[host].host_name }} {{ hostvars[host].host_name.split('.')[0] }}
+      {% if hostvars[host].ansible_host and hostvars[host].hostname is defined %}
+      {{ hostvars[host].ansible_host }}  {{ hostvars[host].hostname }} {{ hostvars[host].hostname.split('.')[0] }}
       {% else %}
-      {{ hostvars[host].default_ipv4.address }}  {{ hostvars[host].hostname }} {{ hostvars[host].hostname.split('.')[0] }}
+      {{ hostvars[host].ansible_facts.default_ipv4.address }}  {{ hostvars[host].ansible_facts.hostname }} {{ hostvars[host].ansible_facts.hostname.split('.')[0] }}
       {% endif %}
       {% endfor %}
     # yamllint enable rule:line-length
@@ -18,7 +18,7 @@
     - microk8s
     - microk8s.ha
     - microk8s.ha.hosts
-  become: yes
+  become: true
 
 - name: Set microk8s_master var on all hosts
   set_fact:
@@ -46,21 +46,21 @@
 
 - name: Waiting for microk8s to be ready on microk8s host master
   ansible.builtin.command:
-    cmd: microk8s status --wait-ready
-  when: inventory_hostname in microk8s_master
+    cmd: /snap/bin/microk8s status --wait-ready
+  when: inventory_hostname == microk8s_master
   changed_when: false
 
 - name: Get microk8s cluster nodes on microk8s host master
   ansible.builtin.command:
-    cmd: kubectl get nodes --no-headers -o custom-columns=:.metadata.name
-  when: inventory_hostname in microk8s_master
+    cmd: /snap/bin/kubectl get nodes --no-headers -o custom-columns=:.metadata.name
+  when: inventory_hostname == microk8s_master
   changed_when: false
   register: microk8s_cluster_node
 
 - name: Get the microk8s join command from the microk8s master
   ansible.builtin.shell:
     cmd: >-
-      microk8s add-node |
+      /snap/bin/microk8s add-node |
       grep -E -m1 'microk8s join {{ microk8s_ip_regex_ha }}'
   delegate_to: "{{ microk8s_master }}"
   changed_when: false
@@ -70,7 +70,7 @@
   
     - name: Waiting for microk8s to be ready on microk8s host node
       ansible.builtin.command:
-        cmd: microk8s status --wait-ready
+        cmd: /snap/bin/microk8s status --wait-ready
       changed_when: false
 
     - name: Set the microk8s join command on the microk8s node
@@ -79,7 +79,7 @@
       register: join_command_ret
       failed_when: join_command_ret.rc > 0 and join_command_ret.stdout is not search("is already known to dqlite")
       
-  when: inventory_hostname not in microk8s_master
+  when: inventory_hostname != microk8s_master
   tags:
     - microk8s
     - microk8s.ha

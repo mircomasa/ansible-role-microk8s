@@ -1,0 +1,20 @@
+[Unit]
+Description=MicroK8s Certificate Renewal (HA Safe) - {{ inventory_hostname }}
+After=snap.microk8s.daemon-kubelite.service
+
+[Service]
+Type=oneshot
+{% for cert in microk8s_certs_to_renew %}
+ExecStart=/snap/bin/microk8s refresh-certs --cert {{ cert }}
+{% endfor %}
+ExecStartPost=/bin/sleep {{ microk8s_certs_sleep_after_refresh }}
+ExecStartPost=/snap/bin/microk8s stop
+ExecStartPost=/bin/sleep {{ microk8s_certs_sleep_after_stop }}
+ExecStartPost=/snap/bin/microk8s start
+ExecStartPost=/bin/sleep {{ microk8s_certs_sleep_after_start }}
+ExecStartPost=/snap/bin/microk8s kubectl get nodes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

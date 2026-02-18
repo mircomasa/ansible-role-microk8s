@@ -60,7 +60,7 @@ repos:
       # keys are sorted and indented.
       # You can configure this with the following commandline options:
       # --autofix - automatically format json files
-      # --indent ... - Control the indentation (either a number for a number of
+      # --indent  - Control the indentation (either a number for a number of
       #                spaces or a string of whitespace). Defaults to 2 spaces.
       # --no-ensure-ascii preserve unicode characters instead of converting to
       #                escape sequences
@@ -96,4 +96,4 @@ repos:
       # potentially be improved. As a community backed project ansible-lint
       # supports only the last two major versions of Ansible.
       - id: ansible-lint
-...
+

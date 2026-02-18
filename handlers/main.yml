@@ -4,21 +4,26 @@
   ansible.builtin.reboot:
   when:
     - skip_handlers | default("false") == "false"
+  become: true
 
 - name: microk8s ready
   ansible.builtin.command:
-    cmd: microk8s.status --wait-ready
+    cmd: /snap/bin/microk8s status --wait-ready
   changed_when: false
   when:
     - skip_handlers | default("false") == "false"
 
-
 - name: stop microk8s
   ansible.builtin.command:
-    cmd: microk8s.stop
+    cmd: /snap/bin/microk8s stop
   listen: "restart microk8s"
     
 - name: start microk8s
   ansible.builtin.command:
-    cmd: microk8s.start
+    cmd: /snap/bin/microk8s start
   listen: "restart microk8s"
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+  become: true

@@ -21,4 +21,4 @@ provisioner:
   config_options:
     defaults:
       verbosity: 1
-...
+

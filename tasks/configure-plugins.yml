@@ -1,17 +1,13 @@
 ---
 
-- name: Enable plugins
+- name: Enable/disble plugins
   ansible.builtin.command:
-    cmd: "microk8s.enable {{ microk8s_plugin.key }}"
-  with_dict: "{{ microk8s_plugins }}"
+    cmd: "/snap/bin/microk8s {{ 'enable' if microk8s_plugin.value else 'disable' }} {{ microk8s_plugin.key }}"
+  loop: "{{ microk8s_plugins | default([]) }}"
   loop_control:
     loop_var: microk8s_plugin
     label: "{{ microk8s_plugin.key }}"
-  when:
-    - microk8s_is_master | default(false) | bool
-    - microk8s_plugins is defined
-    - microk8s_plugin.value
-    - microk8s_plugin.key != "registry"
+  when: microk8s_is_master | default(false) | bool
   register: microk8s_cmd_result
   changed_when:
     - "'is already enabled' not in microk8s_cmd_result.stdout"
@@ -20,64 +16,20 @@
     - microk8s
     - microk8s.plugins
     - microk8s.plugins.enable
-  become: yes
+  become: true
 
-- name: Disable plugins
+- name: Enable/disable registry
   ansible.builtin.command:
-    cmd: "microk8s.disable {{ microk8s_plugin.key }}"
-  with_dict: "{{ microk8s_plugins | default({}) }}"
-  loop_control:
-    loop_var: microk8s_plugin
-    label: "{{ microk8s_plugin.key }}"
-  register: microk8s_cmd_result
-  changed_when:
-    - "'is already disabled' not in microk8s_cmd_result.stdout"
-  when:
-    - microk8s_is_master | default(false) | bool
-    - microk8s_plugins is defined
-    - not (microk8s_plugin.value | bool)
-    - microk8s_plugin.key != "registry"
-  tags:
-    - molecule-idempotence-notest
-    - microk8s
-    - microk8s.plugins
-    - microk8s.plugins.disable
-  become: yes
-
-- name: Enable registry
-  ansible.builtin.command:
-    cmd: "microk8s.enable registry:size={{ microk8s_registry_size }}"
+    cmd: "/snap/bin/microk8s {{ 'enable' if microk8s_registry | default(false) else 'disable' }} registry:size={{ microk8s_registry_size }}"
   register: microk8s_cmd_result
   changed_when:
     - "'Addon registry is already enabled' not in microk8s_cmd_result.stdout"
-  when:
-    - microk8s_is_master | default(false) | bool
-    - microk8s_plugins is defined
-    - microk8s_plugins.registry is defined
-    - (microk8s_plugins.registry | bool)
+  when: microk8s_is_master | default(false) | bool and microk8s_registry
   tags:
     - microk8s
     - microk8s.plugins
     - microk8s.plugins.enable
     - microk8s.plugins.enable.registry
-  become: yes
-
-- name: Disable registry
-  ansible.builtin.command:
-    cmd: "microk8s.disable registry:size={{ microk8s_registry_size }}"
-  register: microk8s_cmd_result
-  changed_when:
-    - "'Addon registry is already disabled' not in microk8s_cmd_result.stdout"
-  when:
-    - microk8s_is_master | default(false) | bool
-    - microk8s_plugins is defined
-    - microk8s_plugins.registry is defined
-    - not (microk8s_plugins.registry | bool)
-  tags:
-    - microk8s
-    - microk8s.plugins
-    - microk8s.plugins.disable
-    - microk8s.plugins.disable.registry
-  become: yes
+  become: true
 
 

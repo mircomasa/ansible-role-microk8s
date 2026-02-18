@@ -1,0 +1,12 @@
+[Unit]
+Description=MicroK8s Certificate Renewal Timer - HA Node
+Requires={{ microk8s_certs_renewal.service_name }}.service
+
+[Timer]
+# Run every 6 months
+OnCalendar=*-01-{{ renewal_day }} {{ microk8s_certs_renewal.renewal_hour }}:{{ microk8s_certs_renewal.renewal_minute }}:00
+OnCalendar=*-07-{{ renewal_day }} {{ microk8s_certs_renewal.renewal_hour }}:{{ microk8s_certs_renewal.renewal_minute }}:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
