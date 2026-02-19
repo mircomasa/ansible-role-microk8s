@@ -21,9 +21,22 @@ ExecStartPre=/bin/sleep 15
 # Step 3: Verify pods relocated (except DaemonSets)
 ExecStartPre=/bin/bash -c 'count=$(/snap/bin/microk8s kubectl get pods --all-namespaces -o wide --field-selector spec.nodeName={{ inventory_hostname }} --no-headers | grep -v DaemonSet | wc -l); echo "Remaining pods: $count"; exit 0'
 
-# Step 4.1: Delete old kubelet certificates (will regenerate on start)
-ExecStartPre=/bin/rm -f /var/snap/microk8s/current/certs/kubelet.crt
-ExecStartPre=/bin/rm -f /var/snap/microk8s/current/certs/kubelet.key
+# Step 4.1: Generate kubelet certificates
+ExecStartPre=/usr/bin/openssl genrsa \
+                -out /var/snap/microk8s/current/certs/kubelet.key 2048
+ExecStartPre=/usr/bin/openssl req -new \
+                -key /var/snap/microk8s/current/certs/kubelet.key \
+                -out /var/snap/microk8s/current/certs/kubelet.csr \
+                -config /var/snap/microk8s/current/certs/csr.conf
+ExecStartPre= openssl x509 -req \
+                -in /var/snap/microk8s/current/certs/kubelet.csr \
+                -CA /var/snap/microk8s/current/certs/ca.crt \
+                -CAkey /var/snap/microk8s/current/certs/ca.key \
+                -CAcreateserial \
+                -out /var/snap/microk8s/current/certs/kubelet.crt \
+                -days 365 \
+                -extensions req_ext \
+                -extfile /var/snap/microk8s/current/certs/csr.conf
 
 # Step 4.2: Refresh certificates
 {% for cert in microk8s_certs_to_renew %}
